@@ -54,20 +54,21 @@ def worker(job):
     job_id = job.id
     (z_ca, _, _) = control.series_ctc(trans_expr, "absolute",
             random_num=job.random_num)
-    results.extend({"job_id": job_id, "ctc": val, "measure": "absolute"}\
-            for val in z_ca)
+    # need to add delay: None, otherwise later values are ignored in insert
+    results.extend({"job_id": job_id, "ctc": val, "delay": None,
+            "measure": "absolute"} for val in z_ca)
     (z_cd, _, _) = control.series_ctc(trans_expr, "difference",
             random_num=job.random_num)
-    results.extend({"job_id": job_id, "ctc": val, "measure": "difference"}\
-            for val in z_cd)
+    results.extend({"job_id": job_id, "ctc": val, "delay": None,
+            "measure": "difference"} for val in z_cd)
     (z_cf, _, _) = control.series_ctc(trans_expr, "functional",
             random_num=job.random_num)
-    results.extend({"job_id": job_id, "ctc": val, "measure": "functional"}\
-            for val in z_cf)
+    results.extend({"job_id": job_id, "ctc": val, "delay": None,
+            "measure": "functional"} for val in z_cf)
     (z_cs, _, _) = control.series_ctc(trans_expr, "functional-comparison",
             random_num=job.random_num)
-    results.extend({"job_id": job_id, "ctc": val, "measure": "functional-comparison"}\
-            for val in z_cs)
+    results.extend({"job_id": job_id, "ctc": val, "delay": None,
+            "measure": "functional-comparison"} for val in z_cs)
     (z_ct1, _, _) = control.series_ctc(trans_expr, "delayed-functional",
             random_num=job.random_num, delay=1)
     results.extend({"job_id": job_id, "ctc": val, "delay": 1,
@@ -99,6 +100,7 @@ def main(args):
     for (job_id, result) in result_it:
         try:
             job = session.query(bd.Job).filter_by(id=job_id).one()
+            # more low-level method for speed
             session.execute(bd.ControlResult.__table__.insert(), result)
             job.complete = True
             session.commit()
